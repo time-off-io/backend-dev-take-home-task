@@ -1,0 +1,4 @@
+spring:
+  flyway:
+    # Adds the development-only seed data on top of the production migrations.
+    locations: classpath:db/migration,classpath:db/seed
