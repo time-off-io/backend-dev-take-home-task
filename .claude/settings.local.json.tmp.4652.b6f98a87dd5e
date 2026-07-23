@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(java -version)",
+      "Bash(mvn -version)",
+      "Bash(docker --version)",
+      "Bash(git --version)",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(echo \"git initialized\")",
+      "Bash(export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64)",
+      "Bash(mvn -q -N wrapper:wrapper -Dmaven=3.9.9)",
+      "Bash(git add *)",
+      "Bash(git commit -q -m 'chore: initialize Maven project scaffolding *)",
+      "Bash(git commit -q -m 'feat\\(common\\): add error handling, config and persistence base *)",
+      "Bash(git commit -q -m 'feat\\(employee\\): employee entity, service and REST API *)",
+      "Bash(mvn -q -B compile)",
+      "Bash(echo JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64)",
+      "Bash(echo \"--- javac on PATH ---\")",
+      "Bash(which javac *)",
+      "Bash(javac -version)",
+      "Bash(echo \"--- JAVA_HOME javac ---\")",
+      "Bash(/usr/lib/jvm/java-21-openjdk-amd64/bin/javac -version)",
+      "Bash(git commit -q -m 'feat\\(leaverequest\\): leave request domain, business rules and REST API *)",
+      "Bash(git commit -q -m 'chore: add Docker, Docker Compose and GitHub CI setup *)"
+    ]
+  }
+}

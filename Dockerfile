@@ -15,6 +15,11 @@ RUN ./mvnw -B -q clean package -DskipTests
 FROM eclipse-temurin:21-jre AS runtime
 WORKDIR /app
 
+# curl is used by the container health check
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 # Run as a non-root user
 RUN groupadd --system app && useradd --system --gid app app
 USER app

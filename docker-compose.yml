@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: timeoff-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-timeoff}
+      POSTGRES_USER: ${DB_USERNAME:-timeoff}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-timeoff}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-timeoff} -d ${DB_NAME:-timeoff}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: timeoff-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-timeoff}
+      DB_USERNAME: ${DB_USERNAME:-timeoff}
+      DB_PASSWORD: ${DB_PASSWORD:-timeoff}
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health/readiness | grep -q UP || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+volumes:
+  postgres-data:
