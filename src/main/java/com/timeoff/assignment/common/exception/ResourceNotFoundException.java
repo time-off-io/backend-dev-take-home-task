@@ -1,0 +1,11 @@
+package com.timeoff.assignment.common.exception;
+
+/**
+ * Thrown when a requested resource does not exist. Maps to HTTP 404.
+ */
+public class ResourceNotFoundException extends BusinessException {
+
+    public ResourceNotFoundException(ErrorCode errorCode, String message) {
+        super(errorCode, message);
+    }
+}

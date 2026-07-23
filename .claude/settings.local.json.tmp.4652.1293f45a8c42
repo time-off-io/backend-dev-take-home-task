@@ -11,7 +11,8 @@
       "Bash(export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64)",
       "Bash(mvn -q -N wrapper:wrapper -Dmaven=3.9.9)",
       "Bash(git add *)",
-      "Bash(git commit -q -m 'chore: initialize Maven project scaffolding *)"
+      "Bash(git commit -q -m 'chore: initialize Maven project scaffolding *)",
+      "Bash(git commit -q -m 'feat\\(common\\): add error handling, config and persistence base *)"
     ]
   }
 }
