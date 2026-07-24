@@ -22,7 +22,8 @@
       "Bash(echo \"--- JAVA_HOME javac ---\")",
       "Bash(/usr/lib/jvm/java-21-openjdk-amd64/bin/javac -version)",
       "Bash(git commit -q -m 'feat\\(leaverequest\\): leave request domain, business rules and REST API *)",
-      "Bash(git commit -q -m 'chore: add Docker, Docker Compose and GitHub CI setup *)"
+      "Bash(git commit -q -m 'chore: add Docker, Docker Compose and GitHub CI setup *)",
+      "Bash(git commit -q -m 'test\\(unit\\): add unit tests for calculator and services *)"
     ]
   }
 }
