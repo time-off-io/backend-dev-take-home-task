@@ -6,7 +6,8 @@ target/
 # Environment
 .env
 
-# IDE
+# IDE / tooling
+.claude/
 .idea/
 *.iml
 *.ipr
