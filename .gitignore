@@ -18,9 +18,6 @@ target/
 .classpath
 bin/
 
-# Internal project specification (not part of the delivered repository)
-task.md
-
 # OS
 .DS_Store
 Thumbs.db
