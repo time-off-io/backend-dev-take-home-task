@@ -35,7 +35,6 @@ Each `LeaveRequest` must be associated with exactly one `LeaveType`.
 ## Business Rules
 
 * Every new leave request must include a `leaveTypeId`.
-* The leave type must exist.
 * The leave type must be active.
 * If `deductsFromAnnualBalance = true`, all the existing balance checks apply.
 * If `deductsFromAnnualBalance = false`, the request may be approved without deducting from
@@ -118,14 +117,9 @@ You should:
 
 * keep the existing functionality working,
 * not remove existing tests,
-* add database migrations,
-* add unit tests,
-* add integration tests,
-* update the API,
-* update the OpenAPI/Swagger documentation,
-* update the README where needed,
+* add everything needed for the requested functionality,
 * make commits with clear commit messages,
-* briefly explain your main technical decisions in a separate file or in the pull request description.
+* briefly explain your main technical decisions in a separate file.
 
 ## Time Expectation
 

@@ -4,7 +4,7 @@ A small, production-style Spring Boot backend for managing employee leave reques
 
 ## Overview
 
-TimeOff is a REST API that lets an organisation manage employees and their annual leave
+Timeoff is a REST API that lets an organisation manage employees and their annual leave
 requests. Employees have an annual leave allowance and a remaining balance. Leave requests go
 through a simple review workflow (pending → approved / rejected / cancelled), with the business
 rules and balance accounting enforced on the server side.
