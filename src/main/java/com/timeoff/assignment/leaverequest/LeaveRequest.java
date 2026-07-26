@@ -2,6 +2,7 @@ package com.timeoff.assignment.leaverequest;
 
 import com.timeoff.assignment.common.persistence.AuditableEntity;
 import com.timeoff.assignment.employee.Employee;
+import com.timeoff.assignment.leavetype.LeaveType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -56,6 +57,10 @@ public class LeaveRequest extends AuditableEntity {
 
     @Column(name = "reviewed_at")
     private Instant reviewedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "leave_type_id", nullable = false, referencedColumnName = "id")
+    private LeaveType leaveType;
 
     /**
      * Creates a new leave request in {@link LeaveRequestStatus#PENDING} status.

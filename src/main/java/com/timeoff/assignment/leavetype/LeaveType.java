@@ -1,0 +1,43 @@
+package com.timeoff.assignment.leavetype;
+
+import com.timeoff.assignment.common.persistence.AuditableEntity;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "leave_type")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class LeaveType extends AuditableEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "name", nullable = false)
+    private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "code", nullable = false, length = 25)
+    private LeaveTypeCode code;
+
+    @Column(name = "deducts_from_annual_balance", nullable = false)
+    private boolean deductsFromAnnualBalance;
+
+    @Column(name = "active", nullable = false)
+    private boolean active;
+
+
+    /**
+     * Creates a new leave type.
+     * {@code requestedDays} is computed by the backend, never supplied by the client.
+     */
+    public LeaveType(String name, LeaveTypeCode code, boolean deductsFromAnnualBalance, boolean active) {
+        this.name = name;
+        this.code = code;
+        this.deductsFromAnnualBalance = deductsFromAnnualBalance;
+        this.active = active;
+    }
+}
