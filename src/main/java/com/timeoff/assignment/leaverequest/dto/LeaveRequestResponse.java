@@ -12,6 +12,7 @@ public record LeaveRequestResponse(
 
         @Schema(example = "1") Long id,
         @Schema(description = "Id of the requesting employee", example = "1") Long employeeId,
+        @Schema(description = "Id of the leave type of the request", example = "1") Long leaveTypeId,
         @Schema(example = "2026-09-14") LocalDate startDate,
         @Schema(example = "2026-09-18") LocalDate endDate,
         @Schema(description = "Working days computed by the backend", example = "5") BigDecimal requestedDays,

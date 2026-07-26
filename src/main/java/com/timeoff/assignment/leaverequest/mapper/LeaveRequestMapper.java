@@ -9,5 +9,6 @@ import org.mapstruct.Mapping;
 public interface LeaveRequestMapper {
 
     @Mapping(target = "employeeId", source = "employee.id")
+    @Mapping(target = "leaveTypeId", source = "leaveType.id")
     LeaveRequestResponse toResponse(LeaveRequest leaveRequest);
 }
