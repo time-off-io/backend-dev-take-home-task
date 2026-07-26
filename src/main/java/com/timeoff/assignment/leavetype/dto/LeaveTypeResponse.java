@@ -1,6 +1,5 @@
 package com.timeoff.assignment.leavetype.dto;
 
-import com.timeoff.assignment.leaverequest.LeaveRequestStatus;
 import com.timeoff.assignment.leavetype.LeaveTypeCode;
 import io.swagger.v3.oas.annotations.media.Schema;
 
