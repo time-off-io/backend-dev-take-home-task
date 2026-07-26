@@ -14,6 +14,9 @@ import com.timeoff.assignment.leaverequest.exception.LeaveRequestInThePastExcept
 import com.timeoff.assignment.leaverequest.exception.NoWorkingDaysException;
 import com.timeoff.assignment.leaverequest.exception.OverlappingLeaveRequestException;
 import com.timeoff.assignment.leaverequest.mapper.LeaveRequestMapperImpl;
+import com.timeoff.assignment.leavetype.LeaveType;
+import com.timeoff.assignment.leavetype.LeaveTypeCode;
+import com.timeoff.assignment.leavetype.LeaveTypeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,6 +56,9 @@ class LeaveRequestServiceTest {
     @Mock
     private EmployeeService employeeService;
 
+    @Mock
+    private LeaveTypeService leaveTypeService;
+
     private LeaveRequestService service;
 
     @BeforeEach
@@ -60,6 +66,7 @@ class LeaveRequestServiceTest {
         service = new LeaveRequestService(
                 leaveRequestRepository,
                 employeeService,
+                leaveTypeService,
                 new WorkingDaysCalculator(),
                 new LeaveRequestMapperImpl(),
                 CLOCK);
@@ -72,12 +79,19 @@ class LeaveRequestServiceTest {
         return employee;
     }
 
+    private LeaveType getLeaveType() {
+        LeaveType leaveType = new LeaveType("Annual leave", LeaveTypeCode.ANNUAL_LEAVE, true);
+        ReflectionTestUtils.setField(leaveType, "id", 1L);
+
+        return leaveType;
+    }
+
     private CreateLeaveRequest createRequest(LocalDate start, LocalDate end) {
-        return new CreateLeaveRequest(1L, start, end, "Vacation");
+        return new CreateLeaveRequest(1L, start, end, "Vacation", 1L);
     }
 
     private LeaveRequest pendingRequest(Employee employee, double days) {
-        return new LeaveRequest(employee, START, END, BigDecimal.valueOf(days), "Vacation");
+        return new LeaveRequest(employee, START, END, BigDecimal.valueOf(days), "Vacation", getLeaveType());
     }
 
     // --- creation ---
@@ -88,6 +102,7 @@ class LeaveRequestServiceTest {
         when(leaveRequestRepository.existsOverlapping(any(), anyList(), any(), any())).thenReturn(false);
         when(leaveRequestRepository.save(any(LeaveRequest.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
+        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType());
 
         LeaveRequestResponse response = service.create(createRequest(START, END));
 
@@ -101,6 +116,7 @@ class LeaveRequestServiceTest {
         Employee employee = activeEmployee(25, 25);
         employee.deactivate();
         when(employeeService.getEntity(1L)).thenReturn(employee);
+        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType());
 
         assertThatThrownBy(() -> service.create(createRequest(START, END)))
                 .isInstanceOf(EmployeeInactiveException.class);
@@ -110,6 +126,7 @@ class LeaveRequestServiceTest {
     @Test
     void rejectsInvertedDateRange() {
         when(employeeService.getEntity(1L)).thenReturn(activeEmployee(25, 25));
+        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType());
 
         assertThatThrownBy(() -> service.create(createRequest(END, START)))
                 .isInstanceOf(InvalidDateRangeException.class);
@@ -118,6 +135,7 @@ class LeaveRequestServiceTest {
     @Test
     void rejectsDatesInThePast() {
         when(employeeService.getEntity(1L)).thenReturn(activeEmployee(25, 25));
+        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType());
 
         LocalDate pastStart = LocalDate.of(2026, 6, 1);
         LocalDate pastEnd = LocalDate.of(2026, 6, 5);
@@ -128,6 +146,7 @@ class LeaveRequestServiceTest {
     @Test
     void rejectsRangeWithoutWorkingDays() {
         when(employeeService.getEntity(1L)).thenReturn(activeEmployee(25, 25));
+        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType());
 
         // Saturday .. Sunday
         LocalDate saturday = LocalDate.of(2026, 9, 19);
@@ -139,6 +158,7 @@ class LeaveRequestServiceTest {
     @Test
     void rejectsOverlappingRequest() {
         when(employeeService.getEntity(1L)).thenReturn(activeEmployee(25, 25));
+        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType());
         when(leaveRequestRepository.existsOverlapping(any(), anyList(), any(), any())).thenReturn(true);
 
         assertThatThrownBy(() -> service.create(createRequest(START, END)))
@@ -149,6 +169,7 @@ class LeaveRequestServiceTest {
     @Test
     void rejectsCreationWhenBalanceInsufficient() {
         when(employeeService.getEntity(1L)).thenReturn(activeEmployee(25, 3));
+        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType());
         when(leaveRequestRepository.existsOverlapping(any(), anyList(), any(), any())).thenReturn(false);
 
         assertThatThrownBy(() -> service.create(createRequest(START, END)))
@@ -159,6 +180,7 @@ class LeaveRequestServiceTest {
     @Test
     void overlapCheckUsesPendingAndApprovedStatuses() {
         when(employeeService.getEntity(1L)).thenReturn(activeEmployee(25, 25));
+        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType());
         when(leaveRequestRepository.existsOverlapping(eq(1L),
                 eq(List.of(LeaveRequestStatus.PENDING, LeaveRequestStatus.APPROVED)),
                 eq(START), eq(END))).thenReturn(false);

@@ -164,7 +164,7 @@ class LeaveRequestIT extends AbstractIntegrationTest {
     @Test
     void rejectsMissingEmployeeIdWithValidationError() throws Exception {
         String payload = objectMapper.writeValueAsString(
-                new CreateLeaveRequest(null, weekStart, weekStart.plusDays(4), "Vacation"));
+                new CreateLeaveRequest(null, weekStart, weekStart.plusDays(4), "Vacation", 1L));
 
         mockMvc.perform(post("/api/v1/leave-requests")
                         .contentType(MediaType.APPLICATION_JSON).content(payload))
@@ -210,7 +210,7 @@ class LeaveRequestIT extends AbstractIntegrationTest {
     private org.springframework.test.web.servlet.ResultActions createLeaveRequest(
             Long employeeId, LocalDate start, LocalDate end) throws Exception {
         String payload = objectMapper.writeValueAsString(
-                new CreateLeaveRequest(employeeId, start, end, "Vacation"));
+                new CreateLeaveRequest(employeeId, start, end, "Vacation", 1L));
         return mockMvc.perform(post("/api/v1/leave-requests")
                 .contentType(MediaType.APPLICATION_JSON).content(payload));
     }

@@ -3,6 +3,9 @@ package com.timeoff.assignment.leaverequest;
 import com.timeoff.assignment.employee.Employee;
 import com.timeoff.assignment.employee.EmployeeRepository;
 import com.timeoff.assignment.leaverequest.dto.ApproveLeaveRequest;
+import com.timeoff.assignment.leavetype.LeaveType;
+import com.timeoff.assignment.leavetype.LeaveTypeCode;
+import com.timeoff.assignment.leavetype.LeaveTypeRepository;
 import com.timeoff.assignment.support.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,7 +14,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
@@ -34,6 +36,9 @@ class LeaveRequestConcurrencyIT extends AbstractIntegrationTest {
     private EmployeeRepository employeeRepository;
     @Autowired
     private LeaveRequestRepository leaveRequestRepository;
+    @Autowired
+    private LeaveTypeRepository leaveTypeRepository;
+
 
     private Long employeeId;
     private Long firstRequestId;
@@ -47,14 +52,18 @@ class LeaveRequestConcurrencyIT extends AbstractIntegrationTest {
         // Allowance (and therefore balance) is 5 days: enough for exactly one 5-day request.
         Employee employee = employeeRepository.save(
                 new Employee("Race", "Condition", "race@example.com", 5));
+
+        LeaveType leaveType =
+                leaveTypeRepository.save(new LeaveType("Annual leave", LeaveTypeCode.ANNUAL_LEAVE, true));
+
         employeeId = employee.getId();
 
         LocalDate firstWeek = LocalDate.of(2027, 3, 1);   // Monday
         LocalDate secondWeek = LocalDate.of(2027, 3, 8);  // Monday
         firstRequestId = leaveRequestRepository.save(
-                new LeaveRequest(employee, firstWeek, firstWeek.plusDays(4), BigDecimal.valueOf(5), "A")).getId();
+                new LeaveRequest(employee, firstWeek, firstWeek.plusDays(4), BigDecimal.valueOf(5), "A",leaveType)).getId();
         secondRequestId = leaveRequestRepository.save(
-                new LeaveRequest(employee, secondWeek, secondWeek.plusDays(4), BigDecimal.valueOf(5), "B")).getId();
+                new LeaveRequest(employee, secondWeek, secondWeek.plusDays(4), BigDecimal.valueOf(5), "B", leaveType)).getId();
     }
 
     @Test
