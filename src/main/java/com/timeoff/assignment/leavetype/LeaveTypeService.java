@@ -1,33 +1,70 @@
 package com.timeoff.assignment.leavetype;
 
-import com.timeoff.assignment.employee.Employee;
-import com.timeoff.assignment.employee.EmployeeNotFoundException;
-import com.timeoff.assignment.employee.EmployeeService;
-import com.timeoff.assignment.leaverequest.LeaveRequestRepository;
-import com.timeoff.assignment.leaverequest.WorkingDaysCalculator;
-import com.timeoff.assignment.leaverequest.mapper.LeaveRequestMapper;
+import com.timeoff.assignment.leaverequest.*;
+import com.timeoff.assignment.leaverequest.exception.*;
+import com.timeoff.assignment.leavetype.dto.CreateLeaveTypeRequest;
+import com.timeoff.assignment.leavetype.dto.LeaveTypeResponse;
+import com.timeoff.assignment.leavetype.dto.UpdateLeaveTypeStatusRequest;
 import com.timeoff.assignment.leavetype.exception.LeaveTypeNotFoundException;
+import com.timeoff.assignment.leavetype.mapper.LeaveTypeMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Clock;
+
 
 @Service
 @Transactional(readOnly = true)
 public class LeaveTypeService {
 
     private final LeaveTypeRepository leaveTypeRepository;
+    private final LeaveTypeMapper leaveTypeMapper;
 
-    public LeaveTypeService(LeaveTypeRepository leaveTypeRepository) {
+    public LeaveTypeService(LeaveTypeRepository leaveTypeRepository, LeaveTypeMapper leaveTypeMapper) {
         this.leaveTypeRepository = leaveTypeRepository;
+        this.leaveTypeMapper = leaveTypeMapper;
     }
+
+    @Transactional
+    public LeaveTypeResponse create(CreateLeaveTypeRequest request) {
+
+        LeaveType leaveType =
+                new LeaveType(request.name(), request.code(), request.deductsFromAnnualBalance());
+
+        return leaveTypeMapper.toResponse(leaveTypeRepository.save(leaveType));
+    }
+
+    public Page<LeaveTypeResponse> list(LeaveTypeFilter filter, Pageable pageable) {
+        Specification<LeaveType> spec = Specification
+                .allOf(LeaveTypeSpecifications.isActive(filter.active()));
+        return leaveTypeRepository.findAll(spec, pageable).map(leaveTypeMapper::toResponse);
+    }
+
+    public LeaveTypeResponse get(Long id) {
+        return leaveTypeMapper.toResponse(getEntity(id));
+    }
+
+
+    @Transactional
+    public LeaveTypeResponse updateStatus(Long employeeId, UpdateLeaveTypeStatusRequest request) {
+        LeaveType leaveType = getEntity(employeeId);
+        if (request.active()) {
+            leaveType.activate();
+        } else {
+            leaveType.deactivate();
+        }
+        return leaveTypeMapper.toResponse(leaveType);
+    }
+
 
     /**
      * Loads a leave type entity or throws a not found error. 
      */
-    public LeaveType getEntity(LeaveTypeCode code) {
-        return leaveTypeRepository.findByCode(code)
-                .orElseThrow(() -> new LeaveTypeNotFoundException(code));
+    public LeaveType getEntity(Long id) {
+        return leaveTypeRepository.findById(id)
+                .orElseThrow(() -> new LeaveTypeNotFoundException(id));
     }
 
 }

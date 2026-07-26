@@ -28,13 +28,11 @@ public record CreateLeaveRequest(
         String reason,
 
         @Schema(
-                description = "Leave type code",
-                example = "ANNUAL_LEAVE",
-                allowableValues = {"ANNUAL_LEAVE", "SICK_LEAVE", "UNPAID_LEAVE"},
-                implementation = String.class,
+                description = "Leave type id",
+                example = "1",
                 requiredMode = Schema.RequiredMode.REQUIRED
         )
         @NotNull
-        LeaveTypeCode leaveTypeCode
+        Long leaveTypeId
 ) {
 }

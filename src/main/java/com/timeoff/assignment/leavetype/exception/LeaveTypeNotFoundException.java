@@ -5,7 +5,7 @@ import com.timeoff.assignment.common.exception.ResourceNotFoundException;
 import com.timeoff.assignment.leavetype.LeaveTypeCode;
 
 public class LeaveTypeNotFoundException  extends ResourceNotFoundException {
-    public LeaveTypeNotFoundException(LeaveTypeCode leaveTypeCode) {
-        super(ErrorCode.LEAVE_TYPE_NOT_FOUND, "Leave type with code %s was not found".formatted(leaveTypeCode));
+    public LeaveTypeNotFoundException(Long id) {
+        super(ErrorCode.LEAVE_TYPE_NOT_FOUND, "Leave type with id %d was not found".formatted(id));
     }
 }

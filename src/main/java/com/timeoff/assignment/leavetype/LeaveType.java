@@ -31,13 +31,22 @@ public class LeaveType extends AuditableEntity {
 
 
     /**
-     * Creates a new leave type.
+     * Creates a new active leave type.
      * {@code requestedDays} is computed by the backend, never supplied by the client.
      */
-    public LeaveType(String name, LeaveTypeCode code, boolean deductsFromAnnualBalance, boolean active) {
+    public LeaveType(String name, LeaveTypeCode code, boolean deductsFromAnnualBalance) {
         this.name = name;
         this.code = code;
         this.deductsFromAnnualBalance = deductsFromAnnualBalance;
-        this.active = active;
+        this.active = true;
+    }
+
+
+    public void activate() {
+        this.active = true;
+    }
+
+    public void deactivate() {
+        this.active = false;
     }
 }

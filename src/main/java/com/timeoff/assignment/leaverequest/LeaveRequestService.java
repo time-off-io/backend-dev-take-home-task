@@ -55,7 +55,7 @@ public class LeaveRequestService {
     @Transactional
     public LeaveRequestResponse create(CreateLeaveRequest request) {
 
-        LeaveType leaveType = leaveTypeService.getEntity(request.leaveTypeCode());
+        LeaveType leaveType = leaveTypeService.getEntity(request.leaveTypeId());
         requireLeaveTypeActive(leaveType, "creation");
 
         Employee employee = employeeService.getEntity(request.employeeId());
