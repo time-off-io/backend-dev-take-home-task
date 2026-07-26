@@ -67,13 +67,14 @@ public class LeaveRequest extends AuditableEntity {
      * {@code requestedDays} is computed by the backend, never supplied by the client.
      */
     public LeaveRequest(Employee employee, LocalDate startDate, LocalDate endDate,
-                        BigDecimal requestedDays, String reason) {
+                        BigDecimal requestedDays, String reason, LeaveType leaveType) {
         this.employee = employee;
         this.startDate = startDate;
         this.endDate = endDate;
         this.requestedDays = requestedDays;
         this.reason = reason;
         this.status = LeaveRequestStatus.PENDING;
+        this.leaveType = leaveType;
     }
 
     public boolean isPending() {

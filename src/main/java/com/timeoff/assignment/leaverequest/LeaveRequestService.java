@@ -73,6 +73,7 @@ public class LeaveRequestService {
         }
 
         BigDecimal requestedDays = workingDaysCalculator.countWorkingDays(startDate, endDate);
+
         if (requestedDays.signum() <= 0) {
             throw new NoWorkingDaysException();
         }
@@ -82,12 +83,17 @@ public class LeaveRequestService {
             throw new OverlappingLeaveRequestException();
         }
 
-        if (!employee.hasSufficientBalance(requestedDays)) {
-            throw new InsufficientLeaveBalanceException();
+
+        if (leaveType.isDeductsFromAnnualBalance()) {
+
+            if (!employee.hasSufficientBalance(requestedDays)) {
+                throw new InsufficientLeaveBalanceException();
+            }
+
         }
 
         LeaveRequest leaveRequest =
-                new LeaveRequest(employee, startDate, endDate, requestedDays, request.reason());
+                new LeaveRequest(employee, startDate, endDate, requestedDays, request.reason(), leaveType);
         return leaveRequestMapper.toResponse(leaveRequestRepository.save(leaveRequest));
     }
 
@@ -121,11 +127,16 @@ public class LeaveRequestService {
 
         Employee employee = leaveRequest.getEmployee();
         BigDecimal requestedDays = leaveRequest.getRequestedDays();
-        if (!employee.hasSufficientBalance(requestedDays)) {
-            throw new InsufficientLeaveBalanceException();
+
+        if (leaveRequest.getLeaveType().isDeductsFromAnnualBalance()) {
+
+            if (!employee.hasSufficientBalance(requestedDays)) {
+                throw new InsufficientLeaveBalanceException();
+            }
+
+            employee.deductLeave(requestedDays);
         }
 
-        employee.deductLeave(requestedDays);
         leaveRequest.approve(request.reviewComment(), Instant.now(clock));
         return leaveRequestMapper.toResponse(leaveRequest);
     }
