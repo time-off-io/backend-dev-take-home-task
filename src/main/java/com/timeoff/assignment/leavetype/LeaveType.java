@@ -7,7 +7,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "leave_type")
+@Table(name = "leave_type",
+        uniqueConstraints = {
+        @UniqueConstraint(
+                name = "leave_type_unique_code",
+                columnNames = "code"
+        )
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class LeaveType extends AuditableEntity {

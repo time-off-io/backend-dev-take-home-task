@@ -5,6 +5,7 @@ import com.timeoff.assignment.leaverequest.exception.*;
 import com.timeoff.assignment.leavetype.dto.CreateLeaveTypeRequest;
 import com.timeoff.assignment.leavetype.dto.LeaveTypeResponse;
 import com.timeoff.assignment.leavetype.dto.UpdateLeaveTypeStatusRequest;
+import com.timeoff.assignment.leavetype.exception.LeaveTypeAlreadyExistsException;
 import com.timeoff.assignment.leavetype.exception.LeaveTypeNotFoundException;
 import com.timeoff.assignment.leavetype.mapper.LeaveTypeMapper;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,10 @@ public class LeaveTypeService {
     @Transactional
     public LeaveTypeResponse create(CreateLeaveTypeRequest request) {
 
+        if (leaveTypeRepository.existsLeaveTypeByCode(request.code())) {
+            throw new LeaveTypeAlreadyExistsException(request.code());
+        }
+
         LeaveType leaveType =
                 new LeaveType(request.name(), request.code(), request.deductsFromAnnualBalance());
 
@@ -48,8 +53,8 @@ public class LeaveTypeService {
 
 
     @Transactional
-    public LeaveTypeResponse updateStatus(Long employeeId, UpdateLeaveTypeStatusRequest request) {
-        LeaveType leaveType = getEntity(employeeId);
+    public LeaveTypeResponse updateStatus(Long leaveTypeId, UpdateLeaveTypeStatusRequest request) {
+        LeaveType leaveType = getEntity(leaveTypeId);
         if (request.active()) {
             leaveType.activate();
         } else {

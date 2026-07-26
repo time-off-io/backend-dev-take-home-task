@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LeaveTypeRepository extends JpaRepository<LeaveType, Long>,  JpaSpecificationExecutor<LeaveType> {
-
+    boolean existsLeaveTypeByCode(LeaveTypeCode code);
 }

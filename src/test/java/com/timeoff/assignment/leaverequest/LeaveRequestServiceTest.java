@@ -37,9 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class LeaveRequestServiceTest {
@@ -79,8 +77,8 @@ class LeaveRequestServiceTest {
         return employee;
     }
 
-    private LeaveType getLeaveType() {
-        LeaveType leaveType = new LeaveType("Annual leave", LeaveTypeCode.ANNUAL_LEAVE, true);
+    private LeaveType getLeaveType(boolean deductsFromAnnualBalance) {
+        LeaveType leaveType = new LeaveType("Annual leave", LeaveTypeCode.ANNUAL_LEAVE, deductsFromAnnualBalance);
         ReflectionTestUtils.setField(leaveType, "id", 1L);
 
         return leaveType;
@@ -91,32 +89,60 @@ class LeaveRequestServiceTest {
     }
 
     private LeaveRequest pendingRequest(Employee employee, double days) {
-        return new LeaveRequest(employee, START, END, BigDecimal.valueOf(days), "Vacation", getLeaveType());
+        return new LeaveRequest(employee, START, END, BigDecimal.valueOf(days), "Vacation", getLeaveType(true));
+    }
+
+    private LeaveRequest pendingRequest(Employee employee, double days, boolean leaveTypeDeductsFromAnnualBalance) {
+        return new LeaveRequest(employee, START, END, BigDecimal.valueOf(days), "Vacation", getLeaveType(leaveTypeDeductsFromAnnualBalance));
     }
 
     // --- creation ---
 
     @Test
     void createsPendingRequestAndComputesWorkingDays() {
-        when(employeeService.getEntity(1L)).thenReturn(activeEmployee(25, 25));
+        Employee employee = spy(activeEmployee(25, 25));
+        when(employeeService.getEntity(1L)).thenReturn(employee);
         when(leaveRequestRepository.existsOverlapping(any(), anyList(), any(), any())).thenReturn(false);
         when(leaveRequestRepository.save(any(LeaveRequest.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
-        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType());
+        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType(true));
 
         LeaveRequestResponse response = service.create(createRequest(START, END));
 
         assertThat(response.status()).isEqualTo(LeaveRequestStatus.PENDING);
         assertThat(response.requestedDays()).isEqualByComparingTo(BigDecimal.valueOf(5));
         assertThat(response.reviewedAt()).isNull();
+        verify(employee, times(1)).hasSufficientBalance(BigDecimal.valueOf(5));
     }
+
+    @Test
+    void create_nonDeductingLeaveType_createLeaveRequestWithoutCheckingForSufficientBalance() {
+        Employee employee = spy(activeEmployee(25, 25));
+        LeaveType leaveType = getLeaveType(false);
+        when(employeeService.getEntity(1L)).thenReturn(employee);
+        when(leaveRequestRepository.existsOverlapping(any(), anyList(), any(), any())).thenReturn(false);
+        when(leaveRequestRepository.save(any(LeaveRequest.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(leaveTypeService.getEntity(1L)).thenReturn(leaveType);
+
+        LeaveRequestResponse response = service.create(createRequest(START, END));
+
+        assertThat(response.status()).isEqualTo(LeaveRequestStatus.PENDING);
+        assertThat(response.requestedDays()).isEqualByComparingTo(BigDecimal.valueOf(5));
+        assertThat(response.reviewedAt()).isNull();
+        assertThat(response.requestedDays()).isEqualByComparingTo(BigDecimal.valueOf(5));
+
+        assertThat(response.leaveTypeId()).isEqualTo(1L);
+        verify(employee, never()).hasSufficientBalance(BigDecimal.valueOf(5));
+    }
+
 
     @Test
     void rejectsCreationForInactiveEmployee() {
         Employee employee = activeEmployee(25, 25);
         employee.deactivate();
         when(employeeService.getEntity(1L)).thenReturn(employee);
-        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType());
+        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType(true));
 
         assertThatThrownBy(() -> service.create(createRequest(START, END)))
                 .isInstanceOf(EmployeeInactiveException.class);
@@ -126,7 +152,7 @@ class LeaveRequestServiceTest {
     @Test
     void rejectsInvertedDateRange() {
         when(employeeService.getEntity(1L)).thenReturn(activeEmployee(25, 25));
-        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType());
+        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType(true));
 
         assertThatThrownBy(() -> service.create(createRequest(END, START)))
                 .isInstanceOf(InvalidDateRangeException.class);
@@ -135,7 +161,7 @@ class LeaveRequestServiceTest {
     @Test
     void rejectsDatesInThePast() {
         when(employeeService.getEntity(1L)).thenReturn(activeEmployee(25, 25));
-        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType());
+        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType(true));
 
         LocalDate pastStart = LocalDate.of(2026, 6, 1);
         LocalDate pastEnd = LocalDate.of(2026, 6, 5);
@@ -146,7 +172,7 @@ class LeaveRequestServiceTest {
     @Test
     void rejectsRangeWithoutWorkingDays() {
         when(employeeService.getEntity(1L)).thenReturn(activeEmployee(25, 25));
-        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType());
+        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType(true));
 
         // Saturday .. Sunday
         LocalDate saturday = LocalDate.of(2026, 9, 19);
@@ -158,7 +184,7 @@ class LeaveRequestServiceTest {
     @Test
     void rejectsOverlappingRequest() {
         when(employeeService.getEntity(1L)).thenReturn(activeEmployee(25, 25));
-        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType());
+        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType(true));
         when(leaveRequestRepository.existsOverlapping(any(), anyList(), any(), any())).thenReturn(true);
 
         assertThatThrownBy(() -> service.create(createRequest(START, END)))
@@ -169,7 +195,7 @@ class LeaveRequestServiceTest {
     @Test
     void rejectsCreationWhenBalanceInsufficient() {
         when(employeeService.getEntity(1L)).thenReturn(activeEmployee(25, 3));
-        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType());
+        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType(true));
         when(leaveRequestRepository.existsOverlapping(any(), anyList(), any(), any())).thenReturn(false);
 
         assertThatThrownBy(() -> service.create(createRequest(START, END)))
@@ -180,7 +206,7 @@ class LeaveRequestServiceTest {
     @Test
     void overlapCheckUsesPendingAndApprovedStatuses() {
         when(employeeService.getEntity(1L)).thenReturn(activeEmployee(25, 25));
-        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType());
+        when(leaveTypeService.getEntity(1L)).thenReturn(getLeaveType(true));
         when(leaveRequestRepository.existsOverlapping(eq(1L),
                 eq(List.of(LeaveRequestStatus.PENDING, LeaveRequestStatus.APPROVED)),
                 eq(START), eq(END))).thenReturn(false);
@@ -229,6 +255,24 @@ class LeaveRequestServiceTest {
 
         assertThatThrownBy(() -> service.approve(7L, new ApproveLeaveRequest(null)))
                 .isInstanceOf(InvalidLeaveRequestStatusException.class);
+    }
+
+    @Test
+    void approve_nonDeductingLeaveType_approveLeaveRequestWithoutCheckingForSufficientBalance() {
+        Employee employee = spy(activeEmployee(25, 10));
+        LeaveRequest request = pendingRequest(employee, 5, false);
+        when(leaveRequestRepository.findById(7L)).thenReturn(Optional.of(request));
+
+        LeaveRequestResponse response = service.approve(7L, new ApproveLeaveRequest("Approved"));
+
+        assertThat(response.status()).isEqualTo(LeaveRequestStatus.APPROVED);
+        assertThat(response.reviewComment()).isEqualTo("Approved");
+        assertThat(response.reviewedAt()).isEqualTo(Instant.now(CLOCK));
+        assertThat(employee.getRemainingLeaveDays()).isEqualByComparingTo(BigDecimal.valueOf(10));
+
+        assertThat(response.leaveTypeId()).isEqualTo(1L);
+        verify(employee, never()).hasSufficientBalance(BigDecimal.valueOf(5));
+        verify(employee, never()).deductLeave(any());
     }
 
     // --- rejection ---

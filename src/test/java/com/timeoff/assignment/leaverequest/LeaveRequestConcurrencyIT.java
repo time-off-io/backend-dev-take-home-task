@@ -48,6 +48,7 @@ class LeaveRequestConcurrencyIT extends AbstractIntegrationTest {
     void setUp() {
         leaveRequestRepository.deleteAll();
         employeeRepository.deleteAll();
+        leaveTypeRepository.deleteAll();
 
         // Allowance (and therefore balance) is 5 days: enough for exactly one 5-day request.
         Employee employee = employeeRepository.save(

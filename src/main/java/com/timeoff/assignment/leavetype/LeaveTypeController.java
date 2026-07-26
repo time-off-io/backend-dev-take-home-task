@@ -39,6 +39,8 @@ public class LeaveTypeController {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Leave types created"),
             @ApiResponse(responseCode = "400", description = "Validation error / invalid",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "409", description = "Leave type already exists",
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public ResponseEntity<LeaveTypeResponse> create(@Valid @RequestBody CreateLeaveTypeRequest request,
@@ -50,7 +52,7 @@ public class LeaveTypeController {
 
     @GetMapping
     @Operation(summary = "List leave types",
-            description = "Returns a paged list of leave types. Optional filters: `active`, `status`. Supports `page`, `size` and `sort` parameters.")
+            description = "Returns a paged list of leave types. Optional filters: `active`. Supports `page`, `size` and `sort` parameters.")
     @ApiResponse(responseCode = "200", description = "Page of leave types")
     public PageResponse<LeaveTypeResponse> list(
             @Parameter(description = "Filter by whether it's active") @RequestParam(required = false) Boolean active,

@@ -6,6 +6,9 @@ import com.timeoff.assignment.employee.dto.CreateEmployeeRequest;
 import com.timeoff.assignment.employee.dto.UpdateEmployeeStatusRequest;
 import com.timeoff.assignment.leaverequest.dto.CreateLeaveRequest;
 import com.timeoff.assignment.leaverequest.dto.RejectLeaveRequest;
+import com.timeoff.assignment.leavetype.LeaveType;
+import com.timeoff.assignment.leavetype.LeaveTypeCode;
+import com.timeoff.assignment.leavetype.LeaveTypeRepository;
 import com.timeoff.assignment.support.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,15 +41,22 @@ class LeaveRequestIT extends AbstractIntegrationTest {
     private EmployeeRepository employeeRepository;
     @Autowired
     private LeaveRequestRepository leaveRequestRepository;
+    @Autowired
+    private LeaveTypeRepository leaveTypeRepository;
 
     // A Monday comfortably in the future, so the "not in the past" rule never breaks over time.
     private final LocalDate weekStart =
             LocalDate.now().plusWeeks(6).with(TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY));
 
+    private LeaveType leaveType;
+
     @BeforeEach
     void cleanDatabase() {
         leaveRequestRepository.deleteAll();
         employeeRepository.deleteAll();
+        leaveTypeRepository.deleteAll();
+
+        leaveType = leaveTypeRepository.save(new LeaveType("Annual leave", LeaveTypeCode.ANNUAL_LEAVE, true));
     }
 
     @Test
@@ -57,7 +67,8 @@ class LeaveRequestIT extends AbstractIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("PENDING"))
                 .andExpect(jsonPath("$.requestedDays").value(5))
-                .andExpect(jsonPath("$.employeeId").value(employeeId));
+                .andExpect(jsonPath("$.employeeId").value(employeeId))
+                .andExpect(jsonPath("$.leaveTypeId").value(leaveType.getId()));
     }
 
     @Test
@@ -210,7 +221,7 @@ class LeaveRequestIT extends AbstractIntegrationTest {
     private org.springframework.test.web.servlet.ResultActions createLeaveRequest(
             Long employeeId, LocalDate start, LocalDate end) throws Exception {
         String payload = objectMapper.writeValueAsString(
-                new CreateLeaveRequest(employeeId, start, end, "Vacation", 1L));
+                new CreateLeaveRequest(employeeId, start, end, "Vacation", leaveType.getId()));
         return mockMvc.perform(post("/api/v1/leave-requests")
                 .contentType(MediaType.APPLICATION_JSON).content(payload));
     }
