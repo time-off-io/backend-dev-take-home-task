@@ -9,7 +9,7 @@ CREATE TABLE leave_type (
     updated_at     TIMESTAMPTZ  NOT NULL,
     version        BIGINT       NOT NULL,
     CONSTRAINT leave_type_unique_code UNIQUE (code),
-    CONSTRAINT ck_leave_type_code CHECK (status IN ('ANNUAL_LEAVE', 'SICK_LEAVE', 'UNPAID_LEAVE'))
+    CONSTRAINT ck_leave_type_code CHECK (code IN ('ANNUAL_LEAVE', 'SICK_LEAVE', 'UNPAID_LEAVE'))
 );
 
 ALTER TABLE leave_request ADD leave_type_id BIGINT;

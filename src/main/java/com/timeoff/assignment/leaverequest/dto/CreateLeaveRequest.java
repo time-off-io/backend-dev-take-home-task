@@ -1,5 +1,7 @@
 package com.timeoff.assignment.leaverequest.dto;
 
+
+import com.timeoff.assignment.leavetype.LeaveTypeCode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -23,6 +25,16 @@ public record CreateLeaveRequest(
 
         @Schema(description = "Optional reason for the leave", example = "Vacation")
         @Size(max = 500)
-        String reason
+        String reason,
+
+        @Schema(
+                description = "Leave type code",
+                example = "ANNUAL_LEAVE",
+                allowableValues = {"ANNUAL_LEAVE", "SICK_LEAVE", "UNPAID_LEAVE"},
+                implementation = String.class,
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
+        @NotNull
+        LeaveTypeCode leaveTypeCode
 ) {
 }

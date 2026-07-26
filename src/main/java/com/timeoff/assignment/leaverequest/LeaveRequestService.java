@@ -7,14 +7,10 @@ import com.timeoff.assignment.leaverequest.dto.ApproveLeaveRequest;
 import com.timeoff.assignment.leaverequest.dto.CreateLeaveRequest;
 import com.timeoff.assignment.leaverequest.dto.LeaveRequestResponse;
 import com.timeoff.assignment.leaverequest.dto.RejectLeaveRequest;
-import com.timeoff.assignment.leaverequest.exception.InsufficientLeaveBalanceException;
-import com.timeoff.assignment.leaverequest.exception.InvalidDateRangeException;
-import com.timeoff.assignment.leaverequest.exception.InvalidLeaveRequestStatusException;
-import com.timeoff.assignment.leaverequest.exception.LeaveRequestInThePastException;
-import com.timeoff.assignment.leaverequest.exception.LeaveRequestNotFoundException;
-import com.timeoff.assignment.leaverequest.exception.NoWorkingDaysException;
-import com.timeoff.assignment.leaverequest.exception.OverlappingLeaveRequestException;
+import com.timeoff.assignment.leaverequest.exception.*;
 import com.timeoff.assignment.leaverequest.mapper.LeaveRequestMapper;
+import com.timeoff.assignment.leavetype.LeaveType;
+import com.timeoff.assignment.leavetype.LeaveTypeService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -37,17 +33,20 @@ public class LeaveRequestService {
 
     private final LeaveRequestRepository leaveRequestRepository;
     private final EmployeeService employeeService;
+    private final LeaveTypeService leaveTypeService;
     private final WorkingDaysCalculator workingDaysCalculator;
     private final LeaveRequestMapper leaveRequestMapper;
     private final Clock clock;
 
     public LeaveRequestService(LeaveRequestRepository leaveRequestRepository,
                                EmployeeService employeeService,
+                               LeaveTypeService leaveTypeService,
                                WorkingDaysCalculator workingDaysCalculator,
                                LeaveRequestMapper leaveRequestMapper,
                                Clock clock) {
         this.leaveRequestRepository = leaveRequestRepository;
         this.employeeService = employeeService;
+        this.leaveTypeService = leaveTypeService;
         this.workingDaysCalculator = workingDaysCalculator;
         this.leaveRequestMapper = leaveRequestMapper;
         this.clock = clock;
@@ -55,6 +54,10 @@ public class LeaveRequestService {
 
     @Transactional
     public LeaveRequestResponse create(CreateLeaveRequest request) {
+
+        LeaveType leaveType = leaveTypeService.getEntity(request.leaveTypeCode());
+        requireLeaveTypeActive(leaveType, "creation");
+
         Employee employee = employeeService.getEntity(request.employeeId());
         if (!employee.isActive()) {
             throw new EmployeeInactiveException(employee.getId());
@@ -114,6 +117,7 @@ public class LeaveRequestService {
     public LeaveRequestResponse approve(Long leaveRequestId, ApproveLeaveRequest request) {
         LeaveRequest leaveRequest = getEntity(leaveRequestId);
         requirePending(leaveRequest, "approve");
+        requireLeaveTypeActive(leaveRequest.getLeaveType(), "approve");
 
         Employee employee = leaveRequest.getEmployee();
         BigDecimal requestedDays = leaveRequest.getRequestedDays();
@@ -152,6 +156,12 @@ public class LeaveRequestService {
     private void requirePending(LeaveRequest leaveRequest, String action) {
         if (!leaveRequest.isPending()) {
             throw new InvalidLeaveRequestStatusException(action, leaveRequest.getStatus());
+        }
+    }
+
+    private void requireLeaveTypeActive(LeaveType leaveType, String action) {
+        if (!leaveType.isActive()) {
+            throw new InactiveLeaveTypeException(action, leaveType.getCode());
         }
     }
 }
